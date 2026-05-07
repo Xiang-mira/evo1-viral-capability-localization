@@ -4,15 +4,15 @@
 
 This repository contains a Phase 1 pilot pipeline for **capability localization in Evo-1 genomic foundation models**.
 
-The goal of this stage is to identify where viral-family sequence information is most linearly accessible inside Evo-1’s hidden representations. This is not a viral classifier project and does not study virulence, infectivity, pathogenicity, host range, or viral generation. Instead, the focus is **taxonomy-level representation probing**: whether frozen Evo-1 activations can separate viral sequences from non-viral sequences.
+The goal of this stage is to identify where viral-family sequence information is most linearly accessible inside Evo-1’s hidden representations. This is not a viral classifier project and does not study virulence, infectivity, pathogenicity, host range, or viral generation. Instead, the focus is **taxonomy-level representation probing**: whether frozen Evo-1 activations can separate viral-family sequences from non-viral genomic backgrounds.
 
-In this pilot, I use a **viral-vs-plasmid RefSeq dataset** and train layer-wise L2 logistic probes on mean-pooled Evo-1 activations.
+The current repository reports an initial **plasmid-negative pilot**. In this pilot, plasmid sequences are used as the first non-viral control set to validate the probing pipeline and produce an initial layer-wise localization result. Broader non-viral controls, especially bacteria-negative reruns, are handled separately and should be used before making stronger biological claims.
 
 ---
 
 ## Main Result
 
-The current pilot result shows that viral/plasmid separability is already highly accessible in the earliest Evo-1 layers.
+The current pilot result shows that the viral-family signal is already highly accessible in the earliest Evo-1 layers under the plasmid-negative control setting.
 
 ### Layer-wise Probe AUROC
 
@@ -22,31 +22,18 @@ The current pilot result shows that viral/plasmid separability is already highly
 
 The strongest signal appears in the early layers:
 
-- Layer 0 already reaches **0.9914 test AUROC**
-- Layer 1 reaches **1.0000 test AUROC**
-- Layer 2 reaches **1.0000 test AUROC**
-- Layers 1–10 form a near-perfect AUROC plateau
+- Layer 0 reaches **0.991425 test AUROC**
+- Layer 1 reaches **0.999975 test AUROC**
+- Layer 2 reaches **1.0 test AUROC**
+- Layers 1–10 stay near the top of the AUROC curve
 - Layer 12 is the main local validation AUROC valley
 - Attention layers at 8, 16, and 24 do not form special AUROC peaks in this pilot
 
-The current pilot suggests that viral/plasmid information is most linearly accessible in the earliest Evo-1 layers, especially Layers 1–10.
+The current pilot suggests that viral-family information is highly linearly accessible in the earliest Evo-1 layers under the current plasmid-negative setup, especially Layers 1–10. This is an initial probing result and should be validated with broader non-viral controls and activation steering.
 
 ---
 
-## Key Probe Metrics
-
-| Layer | Val AUROC | Test AUROC | Val Acc | Test Acc | Interpretation |
-|---:|---:|---:|---:|---:|---|
-| 0 | 0.9939 | 0.9914 | 0.9625 | 0.9525 | Very early separability |
-| 1 | 0.9998 | 1.0000 | 0.9950 | 0.9925 | Near-perfect probe performance |
-| 2 | 0.9997 | 1.0000 | 0.9925 | 0.9925 | Peak test AUROC |
-| 4 | 0.9998 | 0.9999 | 0.9950 | 0.9950 | Peak validation AUROC |
-| 8 | 0.9997 | 0.9999 | 0.9925 | 0.9950 | Attention layer; no special spike |
-| 10 | 0.9992 | 0.9999 | 0.9925 | 0.9900 | End of early high-AUROC plateau |
-| 12 | 0.9843 | 0.9913 | 0.9625 | 0.9750 | Local validation AUROC valley |
-| 13–22 | ≈0.994 | ≈0.996 | ≈0.962 | ≈0.974 | Stable later region |
-| 23–29 | 0.9941 | 0.9944 | 0.9650 | 0.9750 | Duplicated metrics; shown for completeness |
-| 30–31 | 0.9947 | 0.9966 | 0.9600 | 0.9775 | Pairwise duplicated metrics |
+## Layer-wise Probe Metrics
 
 Full layer-wise metrics are available in:
 
@@ -54,33 +41,62 @@ Full layer-wise metrics are available in:
 results/probe_metrics_by_layer.csv
 ```
 
+The table below matches the output columns of `probe_metrics_by_layer.csv`.
+
+| layer | C | train_acc | train_auroc | val_acc | val_auroc | test_acc | test_auroc |
+|---:|---:|---:|---:|---:|---:|---:|---:|
+| 0 | 10.0 | 0.961875 | 0.992215612836895 | 0.9625 | 0.993949394939494 | 0.9525 | 0.991425 |
+| 1 | 10.0 | 0.9946875 | 0.9998851560705563 | 0.995 | 0.9997749774977498 | 0.9925 | 0.999975 |
+| 2 | 10.0 | 0.9984375 | 0.9999968749951172 | 0.9925 | 0.9997249724972497 | 0.9925 | 1.0 |
+| 3 | 1.0 | 0.9975 | 0.9999925781134034 | 0.995 | 0.9997749774977497 | 0.9925 | 0.999925 |
+| 4 | 1.0 | 0.9984375 | 0.9999992187487793 | 0.995 | 0.9998499849984999 | 0.995 | 0.999925 |
+| 5 | 10.0 | 1.0 | 1.0 | 0.9975 | 0.9998249824982498 | 0.9925 | 0.99995 |
+| 6 | 1.0 | 1.0 | 1.0 | 0.9925 | 0.9997499749974997 | 0.9925 | 0.999975 |
+| 7 | 1.0 | 1.0 | 1.0 | 0.995 | 0.9998249824982498 | 0.995 | 0.999975 |
+| 8 | 1.0 | 1.0 | 1.0 | 0.9925 | 0.9997249724972497 | 0.995 | 0.9999 |
+| 9 | 1.0 | 1.0 | 1.0 | 0.995 | 0.9997999799979997 | 0.9925 | 0.999975 |
+| 10 | 0.1 | 1.0 | 1.0 | 0.9925 | 0.9992249224922491 | 0.99 | 0.9999 |
+| 11 | 0.1 | 1.0 | 1.0 | 0.9725 | 0.9959245924592458 | 0.9875 | 0.9947874999999999 |
+| 12 | 0.1 | 1.0 | 1.0 | 0.9625 | 0.9843109310931093 | 0.975 | 0.9912875 |
+| 13 | 0.1 | 0.996875 | 0.9999605468133543 | 0.96 | 0.9937743774377438 | 0.9725 | 0.9947 |
+| 14 | 10.0 | 0.9946875 | 0.9998855466961667 | 0.9625 | 0.9944494449444945 | 0.975 | 0.9959250000000001 |
+| 15 | 1.0 | 0.9921875 | 0.9997308589544671 | 0.9675 | 0.9941994199419942 | 0.975 | 0.99625 |
+| 16 | 1.0 | 0.9921875 | 0.9997308589544671 | 0.9675 | 0.9941994199419942 | 0.975 | 0.99625 |
+| 17 | 10.0 | 0.9940625 | 0.9998421872534176 | 0.9625 | 0.9938743874387439 | 0.975 | 0.9959 |
+| 18 | 0.1 | 0.9903125 | 0.9996765619946282 | 0.9675 | 0.9948244824482448 | 0.9775 | 0.997125 |
+| 19 | 1.0 | 0.996875 | 0.9999207030010985 | 0.96 | 0.9942494249424942 | 0.975 | 0.994975 |
+| 20 | 1.0 | 0.994375 | 0.9998968748388669 | 0.955 | 0.9940494049404941 | 0.9725 | 0.995225 |
+| 21 | 1.0 | 0.995 | 0.9997855465399165 | 0.965 | 0.9941744174417442 | 0.9725 | 0.9956750000000001 |
+| 22 | 1.0 | 0.9940625 | 0.9998667966668698 | 0.9625 | 0.9942744274427443 | 0.9725 | 0.9958750000000001 |
+| 23 | 0.1 | 0.9978125 | 0.9999503905474852 | 0.965 | 0.9940744074407442 | 0.975 | 0.994375 |
+| 24 | 0.1 | 0.9978125 | 0.9999503905474852 | 0.965 | 0.9940744074407442 | 0.975 | 0.994375 |
+| 25 | 0.1 | 0.9978125 | 0.9999503905474852 | 0.965 | 0.9940744074407442 | 0.975 | 0.994375 |
+| 26 | 0.1 | 0.9978125 | 0.9999503905474852 | 0.965 | 0.9940744074407442 | 0.975 | 0.994375 |
+| 27 | 0.1 | 0.9978125 | 0.9999503905474852 | 0.965 | 0.9940744074407442 | 0.975 | 0.994375 |
+| 28 | 0.1 | 0.9978125 | 0.9999503905474852 | 0.965 | 0.9940744074407442 | 0.975 | 0.994375 |
+| 29 | 0.1 | 0.9978125 | 0.9999503905474852 | 0.965 | 0.9940744074407442 | 0.975 | 0.994375 |
+| 30 | 1.0 | 0.9940625 | 0.9997546871166986 | 0.96 | 0.9946744674467447 | 0.9775 | 0.9966250000000001 |
+| 31 | 1.0 | 0.9940625 | 0.9997546871166986 | 0.96 | 0.9946744674467447 | 0.9775 | 0.9966250000000001 |
+
 ---
 
-## Baseline Comparison
-
-To test whether the separation can be explained by simple nucleotide composition, I also ran a GC + 1-gram logistic regression baseline.
-
-This baseline uses only six features:
-
-```text
-GC content + A/C/G/T/N frequencies
-```
-
-No Evo representations are used in this baseline.
-
-| Method | Features | Test Acc | Test AUROC |
-|---|---|---:|---:|
-| GC + 1-gram logistic regression | GC + A/C/G/T/N frequency | 0.6400 | 0.6854 |
-| Evo Layer 0 probe | Mean-pooled Evo activation | 0.9525 | 0.9914 |
-| Evo Layer 2 probe | Mean-pooled Evo activation | 0.9925 | 1.0000 |
-
-The GC + 1-gram baseline reaches **0.6854 test AUROC**, while Evo Layer 0 already reaches **0.9914 test AUROC**. This gap suggests that Evo-1 hidden representations contain substantially stronger viral/plasmid separability than single-nucleotide composition alone.
+## GC + 1-gram Baseline Metrics
 
 Baseline metrics are available in:
 
 ```text
 results/gc_1gram_metrics.csv
 ```
+
+The table below matches the output columns of `gc_1gram_metrics.csv`.
+
+| C | train_acc | train_auroc | val_acc | val_auroc | test_acc | test_auroc |
+|---:|---:|---:|---:|---:|---:|---:|
+| 10.0 | 0.6225 | 0.6697489702867573 | 0.615 | 0.668916891689169 | 0.64 | 0.6853634085213033 |
+
+The GC + 1-gram baseline uses only GC content and A/C/G/T/N frequencies. No Evo representations are used in this baseline.
+
+The baseline test AUROC is **0.6853634085213033**, while the Evo layer-wise probes reach much higher AUROC values in early layers under the current plasmid-negative pilot setting. This indicates that the frozen Evo-1 activations contain stronger viral-family separability than the simple 1-gram composition baseline in this pilot.
 
 ---
 
@@ -89,7 +105,7 @@ results/gc_1gram_metrics.csv
 This repository includes the completed Phase 1 pilot workflow:
 
 - Evo-1 checkpoint loading and forward inference test
-- RefSeq-based viral-vs-plasmid pilot manifest construction
+- RefSeq-based pilot manifest construction using plasmids as the initial non-viral control
 - Layer-wise activation extraction from all 32 Evo-1 blocks
 - Mask-aware mean pooling into 4096-dimensional sequence representations
 - 32 layer-wise L2-regularized logistic probes
@@ -97,26 +113,29 @@ This repository includes the completed Phase 1 pilot workflow:
 - GC + 1-gram logistic regression baseline
 - Layer-wise AUROC visualization
 - Full 32-layer metrics table
+- Separate bacteria-negative rerun script prepared for broader non-viral validation
 
 ---
 
 ## Dataset
 
-The current results are based on a viral-vs-plasmid pilot dataset.
+The current plotted results are based on the **plasmid-negative pilot manifest**.
 
 | Item | Value |
 |---|---:|
 | Data source | NCBI RefSeq |
 | Viral sequences | 2,000 |
-| Plasmid sequences | 2,000 |
+| Initial non-viral control sequences | 2,000 plasmid sequences |
 | Total sequences | 4,000 |
 | Window length | 2,048 bp |
 | Train / Val / Test | 3,200 / 400 / 400 |
 | Split ratio | 80% / 10% / 10% |
 | Random seed | 42 |
-| Label definition | viral = 1, plasmid = 0 |
+| Current pilot label definition | viral = 1, plasmid-control = 0 |
 
 Exact duplicate checking was performed across the train, validation, and test splits. All 4,000 sequences are unique, so the current AUROC values are not inflated by exact duplicate sequence leakage.
+
+The plasmid set should be interpreted as the current pilot negative control, not as the full definition of non-viral genomic background. Additional bacteria-negative reruns are prepared separately to evaluate whether the early-layer localization pattern remains stable under broader non-viral controls.
 
 ---
 
@@ -140,10 +159,10 @@ Evo-1 is not a standard Transformer. Most layers are Hyena convolutional operato
 
 ## Pipeline
 
-The full pilot pipeline is organized into four main steps.
+The current pilot pipeline is organized into four main steps.
 
 ```text
-Step 1: Build manifest
+Step 1: Build pilot manifest
 RefSeq FASTA files
 → clean A/C/G/T/N
 → crop or sample 2048-bp windows
@@ -169,6 +188,8 @@ probe_metrics_by_layer.csv
 → layer-wise validation/test AUROC curve
 ```
 
+A separate `run_bacteria_rerun.sh` script is included for the bacteria-negative rerun. It writes to a separate output directory to avoid overwriting the current plasmid-negative pilot results.
+
 ---
 
 ## Method
@@ -193,13 +214,13 @@ For each layer, I then train an L2-regularized logistic regression probe:
 
 ```text
 Input: mean-pooled activation from layer l
-Output: viral vs plasmid label
+Output: current pilot label, viral vs plasmid-control
 Metric: AUROC and accuracy
 C-grid: 0.1, 1, 10
 Selection criterion: validation AUROC
 ```
 
-The linear probe is intentionally simple. The goal is not to maximize classifier complexity, but to test whether viral/plasmid information is linearly accessible in the frozen representation space.
+The linear probe is intentionally simple. The goal is not to maximize classifier complexity, but to test whether viral-family information is linearly accessible in the frozen representation space under a given non-viral control setting.
 
 ---
 
@@ -207,13 +228,15 @@ The linear probe is intentionally simple. The goal is not to maximize classifier
 
 The main interpretation from the pilot result is:
 
-> Viral/plasmid separability is already highly linearly accessible in the earliest Evo-1 layers.
+> Viral-family separability is already highly linearly accessible in the earliest Evo-1 layers under the current plasmid-negative pilot setting.
 
-This is notable because one might expect higher-level biological or taxonomic information to emerge in middle or later layers. Instead, Layer 0 is already above 0.99 test AUROC, and Layers 1–10 form a near-perfect plateau.
+This is notable because one might expect higher-level biological or taxonomic information to emerge in middle or later layers. Instead, Layer 0 reaches 0.991425 test AUROC, and the early layers remain high.
 
-A plausible explanation is that Hyena convolutional layers can aggregate sequence composition and higher-order motif statistics very early. The GC + 1-gram baseline already shows that simple nucleotide composition carries some signal, but the large gap between GC + 1-gram and Evo Layer 0 indicates that Evo is extracting richer sequence features than single-base frequencies.
+A plausible explanation is that Hyena convolutional layers can aggregate sequence composition and higher-order motif statistics very early. The GC + 1-gram baseline already shows that simple nucleotide composition carries some signal, but the gap between the baseline and the early Evo probes suggests that Evo is extracting richer sequence features than single-base frequencies.
 
-The attention layers do not show special peaks in this pilot. Layer 8 is high, but it follows the broader early-layer plateau. Layers 16 and 24 do not create clear new peaks in the current plotted results.
+However, because the current plotted result only uses plasmids as the negative control, this should be interpreted as an initial pilot localization result rather than a final biological conclusion about all non-viral genomic backgrounds. Future reruns with bacteria and other broader non-viral controls are necessary before making stronger claims.
+
+The attention layers do not show special peaks in this pilot. Layer 8 is high, but it follows the broader early-layer trend. Layers 16 and 24 do not create clear new peaks in the current plotted results.
 
 ---
 
@@ -227,7 +250,9 @@ Each trained probe produces a `.npz` file containing:
 | `intercept` | Logistic regression intercept |
 | `C` | Selected regularization strength |
 
-The probe coefficient vector can be interpreted as the linear direction that increases the viral logit in that layer’s representation space. These vectors are useful for analyzing the geometry of layer-wise separability and can be reused as candidate steering directions in follow-up experiments.
+The probe coefficient vector can be interpreted as the linear direction that increases the viral-family logit under the current pilot label setup. These vectors are useful for analyzing the geometry of layer-wise separability and can be reused as candidate steering directions in follow-up experiments.
+
+These probe directions should not be treated as causal viral-capability directions until they are validated with activation steering or ablation.
 
 ---
 
@@ -240,6 +265,16 @@ The early-layer results are the main conclusion of this pilot. The late-layer ro
 - Layers 30–31 are duplicated.
 
 These rows should not be used as the main basis for interpretation. The early-layer localization pattern, especially Layers 1–10, does not depend on the duplicated late-layer region.
+
+Additional reliability work is still needed:
+
+- bacteria-negative rerun for a broader non-viral control
+- higher-order k-mer baselines
+- shuffled-label control
+- multiple random seeds
+- group-level split by accession, genus, or family where possible
+- activation steering validation
+- late-layer feature extraction debugging
 
 ---
 
@@ -271,16 +306,16 @@ evo1-viral-capability-localization/
 
 | File | Description |
 |---|---|
-| `run.sh` | End-to-end viral-vs-plasmid Phase 1 pilot pipeline |
-| `run_bacteria_rerun.sh` | Optional viral-vs-bacteria rerun script using a separate output directory |
+| `run.sh` | End-to-end current plasmid-negative Phase 1 pilot pipeline |
+| `run_bacteria_rerun.sh` | Optional bacteria-negative rerun script using a separate output directory |
 | `phase1/download_refseq.py` | Downloads RefSeq FASTA files and builds the manifest |
 | `phase1/extract_features.py` | Extracts mean-pooled 32-layer Evo-1 activations |
 | `phase1/train_probes.py` | Trains layer-wise L2 logistic probes |
 | `phase1/baseline_gc_1gram.py` | Runs GC + 1-gram baseline |
 | `phase1/plot_metrics.py` | Generates layer-wise AUROC visualization |
 | `phase1/utils.py` | Shared utilities for manifest reading, sequence cleaning, batching, and feature writing |
-| `results/probe_metrics_by_layer.csv` | Full 32-layer probe metrics |
-| `results/gc_1gram_metrics.csv` | Baseline metrics |
+| `results/probe_metrics_by_layer.csv` | Full 32-layer probe metrics from the current pilot |
+| `results/gc_1gram_metrics.csv` | GC + 1-gram baseline metrics from the current pilot |
 | `docs/assets/probe_metrics.png` | Layer-wise AUROC plot shown in README |
 
 ---
@@ -293,7 +328,7 @@ It should not include:
 
 - model checkpoints
 - raw FASTA files
-- raw viral or plasmid sequences
+- raw genomic sequence data
 - large activation feature chunks
 - large `.npy` feature matrices
 - private server paths
